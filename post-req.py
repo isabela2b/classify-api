@@ -22,6 +22,9 @@ image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image
 ('file',('pkl.png', open('data/pkl/pkl.png', 'rb'), 'file/image'))
 ]
 
-r = requests.post(url, data=payload, files=mult_files)
+color_files = [('file',('pkd_2.jpg', open('data/pkd/pkd_2.jpg', 'rb'), 'file/image'))
+]
+
+r = requests.post(url, data=payload, files=color_files)
 print(r)
 print(r.text)

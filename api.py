@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 import pytesseract
 import cv2 as cv
 import pandas as pd
+import numpy as np
 
 import docx
 from pdf2image import convert_from_bytes
@@ -19,10 +20,30 @@ def allowed_file(filename):
 def file_ext(filename):
 	return filename.rsplit('.', 1)[1].lower()
 
+"""
+def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
+    dim = None
+    (h, w) = image.shape[:2]
+
+    if width is None and height is None:
+        return image
+    if width is None:
+        r = height / float(h)
+        dim = (int(w * r), height)
+    else:
+        r = width / float(w)
+        dim = (width, int(h * r))
+
+    return cv.resize(image, dim, interpolation=inter)
+"""
+
 def img_to_string(image):
 	"""Takes an image, pre-processes it, then parses text into a string"""
-	
-	#image = cv.cvtColor(cv.imread(image), cv.COLOR_BGR2GRAY)
+	image = cv.cvtColor(np.asarray(image), cv.COLOR_BGR2GRAY)
+	"""resize = ResizeWithAspectRatio(image, width=980)
+	cv.imshow("grayscale", resize)
+	cv.waitKey(0)
+	cv.destroyAllWindows() """  
 	string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
 	return string
 
