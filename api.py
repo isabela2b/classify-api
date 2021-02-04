@@ -126,7 +126,7 @@ def classify():
 		for file in files:
 			if file and allowed_file(file.filename):
 				file_type = parse_classify(file)
-				data["files"].append({'file': file.filename, 'type': file_type})
+				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type})
 
 	return jsonify(data)
 	

@@ -4,7 +4,7 @@ This is a Flask API that classifies files into various document types.
 
 # Features
 
-  - Receives POST request and returns a JSON file containing the client name, file name, file size, and document classification
+  - Receives POST request and returns a JSON file containing the client name, file name, file size (in bytes), and document classification
   - Can classify documents into the following priority formats: CIV, HBL, PKL, PKD. It returns "other" when it does not fall into any of the mentioned formats
   - Accepts the following file formats: pdf, png, jpg, jpeg, docx, xls, xlsx
   - Uses AI to parse text in images 
@@ -44,7 +44,7 @@ Install the dependencies and start the server.
 
 ```sh
 $ cd classify-api
-$ python api.py
+$ python3 api.py
 ```
 
 
