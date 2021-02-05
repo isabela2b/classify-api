@@ -21,37 +21,59 @@ Accuracy hasn't really been tested yet because we're still waiting for more clie
 
 ### Project Structure
 - api.py - API file to be integrated with the hub
+- requirements.txt - file of all the dependencies required to run the application
 - test folder - for testing the API
     - post-req.py - to check api.py responses
     - data folder - contains sample files to send to api.py when testing
+- bin, include, lib, lib64 - folders needed to run python's virtual environment, contains libraries
+- pyvenv.cfg - also needed to run the virtual environment
 
 ### Dependencies
 
-* python 3.8.3
-* flask 1.1.2 - python web app framework used for the API
-* werkzeug 1.0.1
-* [pytesseract] 0.3.7 - optical character recognition (OCR) tool for parsing text to images
-* [cv2] 4.5.1 - computer vision library used in this project for image pre-processing 
-* pandas 1.0.5
-* numpy 1.18.5
-* docx 0.8.10
-* pdf2image 1.14.0
-* PIL 8.1.0
+You can also check for the dependencies by running `pip list` in the terminal. 
 
-### Installation
+| Package      | Version | Description |
+|---------------| --------| ------|
+|python       |    3.8.3 | 
+|click       |    7.1.2 |  
+| docx        |    0.2.4 |  |
+| Flask        |   1.1.2 | python web app framework used for the API |
+| itsdangerous  |  1.1.0 |  |
+| Jinja2       |   2.11.3 |  |
+| lxml         |   4.6.2 |  |
+| MarkupSafe   |   1.1.1 |  |
+| numpy        |   1.20.0 |  |
+| [opencv-python] |  4.5.1.48 | computer vision library used in this project for image pre-processing  |
+| pandas      |    1.2.1 |  |
+| pdf2image   |    1.14.0 |  |
+| Pillow      |    8.1.0 |  |
+| pip        |     21.0.1 |  |
+| [pytesseract]  |   0.3.7 | optical character recognition (OCR) tool for parsing text to images  |
+| python-dateutil| 2.8.1 |  |
+| python-docx  |   0.8.10 |  |
+| pytz        |    2021.1 |  |
+| setuptools  |    41.2.0 |  |
+| six          |   1.15.0 |  |
+| Werkzeug     |   1.0.1 |  |
 
-Install the dependencies and start the server.
+
+### Run
+
+Run venv, install the dependencies, then start the server.
 
 ```sh
 $ cd classify-api
-$ python3 api.py
+$ . venv/bin/activate # activate virtual environment
+$ pip install -r requirements.txt #install dependencies
+$ export FLASK_APP=api.py
+$ export FLASK_ENV=development
+$ flask run
 ```
-
 
 ### Todos
 
  - Train AI classification model once we get more files
- - Check if the auto-crop feature will still be needed of if it's just an edge case (see test/data/pkd_2.jpg). If yes, include auto-crop + re-orientation in pre-processing method. 
+ - Check if the auto-capirop feature will still be needed of if it's just an edge case (see test/data/pkd_2.jpg). If yes, include auto-crop + re-orientation in pre-processing method. 
 
 
 
@@ -59,5 +81,5 @@ $ python3 api.py
 
 
    [pytesseract]: <https://github.com/madmaze/pytesseract>
-   [cv2]: <https://github.com/opencv/opencv>
+   [opencv-python]: <https://github.com/opencv/opencv>
 
