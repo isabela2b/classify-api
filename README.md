@@ -33,13 +33,7 @@ You can also check for the dependencies by running `pip list` in the terminal.
 | Package      | Version | Description |
 |---------------| --------| ------|
 |python       |    3.8.3 | 
-|click       |    7.1.2 |  
-| docx        |    0.2.4 |  |
 | Flask        |   1.1.2 | python web app framework used for the API |
-| itsdangerous  |  1.1.0 |  |
-| Jinja2       |   2.11.3 |  |
-| lxml         |   4.6.2 |  |
-| MarkupSafe   |   1.1.1 |  |
 | numpy        |   1.20.0 |  |
 | [opencv-python] |  4.5.1.48 | computer vision library used in this project for image pre-processing  |
 | pandas      |    1.2.1 |  |
@@ -47,13 +41,8 @@ You can also check for the dependencies by running `pip list` in the terminal.
 | Pillow      |    8.1.0 |  |
 | pip        |     21.0.1 |  |
 | [pytesseract]  |   0.3.7 | optical character recognition (OCR) tool for parsing text to images  |
-| python-dateutil| 2.8.1 |  |
 | python-docx  |   0.8.10 |  |
-| pytz        |    2021.1 |  |
-| setuptools  |    41.2.0 |  |
-| six          |   1.15.0 |  |
-| [waitress]     |  1.4.4 | production-quality pure-Python WSGI server that can run on UNIX and Windows |
-| Werkzeug     |   1.0.1 |  |
+| [waitress]     |  1.4.4 | production-quality pure-Python WSGI server that can run on UNIX and Windows 
 
 
 ## Run
