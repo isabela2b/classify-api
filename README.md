@@ -53,12 +53,15 @@ You can also check for the dependencies by running `pip list` in the terminal.
 | pytz        |    2021.1 |  |
 | setuptools  |    41.2.0 |  |
 | six          |   1.15.0 |  |
+| [waitress]     |  1.4.4 | production-quality pure-Python WSGI server that can run on UNIX and Windows |
 | Werkzeug     |   1.0.1 |  |
 
 
-### Run
+## Run
 
 Run venv, install the dependencies, then start the server.
+
+### Development:
 
 ```sh
 $ cd classify-api
@@ -68,6 +71,38 @@ $ export FLASK_APP=api.py
 $ export FLASK_ENV=development
 $ flask run
 ```
+
+For Windows cmd, use set instead of export:
+```sh
+> set FLASK_APP=api.py
+> set FLASK_ENV=development
+> flask run
+```
+
+For Windows PowerShell, use $env: instead of export:
+```sh
+> $env:FLASK_APP = "api.py"
+> $env:FLASK_ENV = "development"
+> flask run
+```
+
+
+### Production:
+```sh
+$ cd classify-api
+$ . venv/bin/activate # activate virtual environment
+$ pip install -r requirements.txt #install dependencies
+$ export FLASK_APP=api.py
+$ export FLASK_ENV=production
+$ waitress-serve [OPTIONS] "api:app"
+```
+Options for waitress-serve:
+- --host=ADDR
+    Hostname or IP address on which to listen, default is '0.0.0.0', which means "all IP addresses on this host".
+--port=PORT
+    TCP port on which to listen, default is '8080'
+
+More options can be found [here]<'https://docs.pylonsproject.org/projects/waitress/en/stable/runner.html'>
 
 ### Todos
 
@@ -81,4 +116,5 @@ $ flask run
 
    [pytesseract]: <https://github.com/madmaze/pytesseract>
    [opencv-python]: <https://github.com/opencv/opencv>
+   [waitress]: <https://docs.pylonsproject.org/projects/waitress/en/stable/index.html>
 

@@ -1,6 +1,7 @@
 import json, requests
 
 url = 'http://127.0.0.1:5000/classify'
+prod_url = 'http://0.0.0.0:8080/classify'
 #url = 'http://httpbin.org/post'
 
 payload = {'client': 'a2b'}
@@ -25,6 +26,6 @@ image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image
 color_files = [('file',('pkd_2.jpg', open('data/pkd/pkd_2.jpg', 'rb'), 'file/image'))
 ]
 
-r = requests.post(url, data=payload, files=mult_files)
+r = requests.post(prod_url, data=payload, files=mult_files)
 print(r)
 print(r.text)
