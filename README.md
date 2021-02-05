@@ -25,8 +25,7 @@ Accuracy hasn't really been tested yet because we're still waiting for more clie
 - test folder - for testing the API
     - post-req.py - to check api.py responses
     - data folder - contains sample files to send to api.py when testing
-- bin, include, lib, lib64 - folders needed to run python's virtual environment, contains libraries
-- pyvenv.cfg - also needed to run the virtual environment
+- venv - folders needed to run python's virtual environment, contains libraries
 
 ### Dependencies
 
