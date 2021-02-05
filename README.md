@@ -99,10 +99,10 @@ $ waitress-serve [OPTIONS] "api:app"
 Options for waitress-serve:
 - --host=ADDR
     Hostname or IP address on which to listen, default is '0.0.0.0', which means "all IP addresses on this host".
---port=PORT
+- --port=PORT
     TCP port on which to listen, default is '8080'
 
-More options can be found [here]<'https://docs.pylonsproject.org/projects/waitress/en/stable/runner.html'>
+More options can be found [here] <'https://docs.pylonsproject.org/projects/waitress/en/stable/runner.html'>
 
 ### Todos
 
