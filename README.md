@@ -25,7 +25,6 @@ Accuracy hasn't really been tested yet because we're still waiting for more clie
 - test folder - for testing the API
     - post-req.py - to check api.py responses
     - data folder - contains sample files to send to api.py when testing
-- venv - folders needed to run python's virtual environment, contains libraries
 
 ### Dependencies
 
@@ -65,6 +64,7 @@ Run venv, install the dependencies, then start the server.
 
 ```sh
 $ cd classify-api
+$ python -m venv venv #create venv
 $ . venv/bin/activate # activate virtual environment
 $ pip install -r requirements.txt #install dependencies
 $ export FLASK_APP=api.py
@@ -102,7 +102,7 @@ Options for waitress-serve:
 - --port=PORT
     TCP port on which to listen, default is '8080'
 
-More options can be found [here] <'https://docs.pylonsproject.org/projects/waitress/en/stable/runner.html'>
+More options can be found [here] ('https://docs.pylonsproject.org/projects/waitress/en/stable/runner.html')
 
 ### Todos
 
