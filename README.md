@@ -61,8 +61,11 @@ $ export FLASK_ENV=development
 $ flask run
 ```
 
-For Windows cmd, use set instead of export:
+For Windows cmd:
 ```sh
+> py -3 -m venv venv #create venv
+> venv\Scripts\activate #activate virtual environment
+> pip install -r requirements.txt #install dependencies
 > set FLASK_APP=api.py
 > set FLASK_ENV=development
 > flask run
@@ -85,6 +88,16 @@ $ export FLASK_APP=api.py
 $ export FLASK_ENV=production
 $ waitress-serve [OPTIONS] "api:app"
 ```
+
+For Windows cmd:
+```sh
+> venv\Scripts\activate #activate virtual environment
+> pip install -r requirements.txt #install dependencies
+> set FLASK_APP=api.py
+> set FLASK_ENV=production
+> waitress-serve [OPTIONS] "api:app"
+```
+
 Options for waitress-serve:
 - --host=ADDR
     Hostname or IP address on which to listen, default is '0.0.0.0', which means "all IP addresses on this host".
