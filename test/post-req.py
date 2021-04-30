@@ -1,4 +1,6 @@
 import json, requests
+from urllib.request import Request, urlopen
+
 
 url = 'http://127.0.0.1:5000/classify'
 prod_url = 'http://0.0.0.0:8080/classify'
@@ -14,18 +16,30 @@ mult_files = [
 	('file',('pkd_3.jpg', open('data/pkd/pkd_3.jpg', 'rb'), 'file/image')),
 	('file',('pkl_1.pdf', open('data/pkl/pkl_1.pdf', 'rb'), 'file/pdf')) ]
 
+#print(type(mult_files))
+
 doc_files = [('file',('d_pkd_1.docx', open('data/pkd/d_pkd_1.docx', 'rb'), 'file/doc'))]
 
 excel_files = [('file',('x_pkl_1.xls', open('data/pkl/x_pkl_1.xls', 'rb'), 'file/excel')),
 ('file',('x_pkl_3.xlsx', open('data/pkl/x_pkl_3.xlsx', 'rb'), 'file/excel'))]
 
-image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image')),
-('file',('pkl.png', open('data/pkl/pkl.png', 'rb'), 'file/image'))
+#req = Request('https://templatelab.com/wp-content/uploads/2017/02/bill-of-lading-01.jpg', headers={'User-Agent': 'Mozilla/5.0'})
+#img = urlopen(req).read()
+
+image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image'))
 ]
 
-color_files = [('file',('pkd_2.jpg', open('data/pkd/pkd_2.jpg', 'rb'), 'file/image'))
-]
+pdf_files = [('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf'))]
 
-r = requests.post(url, data=payload, files=mult_files)
-print(r)
+r = requests.post(url, data=payload, files=image_files)
 print(r.text)
+
+
+"""file1 = open("myfile.txt","w") 
+file1.write(str(r.text))
+body = open("body.txt","w") 
+body.write(str(r.request.body))
+header = open("header.txt","w") 
+header.write(str(r.request.headers))"""
+
+
