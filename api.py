@@ -4,15 +4,24 @@ import pytesseract
 import cv2 as cv
 import pandas as pd
 import numpy as np
+import io
 
 import docx
 from pdf2image import convert_from_bytes
 from PIL import Image
 
+import keras
+from keras.models import load_model
+
 app = Flask(__name__)
+
+
+model = load_model('base.hdf5')
+doc_type = ['civ', 'coo', 'hbl', 'mbl', 'other', 'pkd', 'pkl']
 
 # Allowed extension you can set your own
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'xls'])
+THRESHOLD = 80
 
 def allowed_file(filename):
     return '.' in filename and file_ext(filename) in ALLOWED_EXTENSIONS
@@ -47,6 +56,32 @@ def img_to_string(image):
 	string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
 	return string
 
+def img_preprocess(image):
+	gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY) # for some reason the dims differ
+	image = cv.resize(gray, (256,256))
+
+	cv.imwrite('convert.jpg', image)
+	im=cv.imread('convert.jpg')
+
+	im = im/255
+	im = np.expand_dims(im, axis=0)
+
+	return im
+
+def model_classify(image):
+	image = img_preprocess(image)
+	holistic_pred=model.predict(image)
+
+	sort_index=np.argsort(holistic_pred)[::-1]
+	df=pd.DataFrame({'Document_Type':doc_type,
+                         'Percentage':holistic_pred[0]})
+	df=df.sort_values('Percentage',ascending=False)
+	labels=df['Document_Type']
+
+	return (df.iloc[0]['Document_Type'], df.iloc[0]['Percentage']*100)
+
+	#return image
+
 def key_classify(string):
 	string = string.lower()
 	if "packing declaration" in string:
@@ -73,11 +108,23 @@ def parse_classify(file):
 	string = ""
 
 	if ext == "pdf":
-		images = convert_from_bytes(file.read()) 
-		string = img_to_string(images[0])
+		images = convert_from_bytes(file.read())
+		model_return = model_classify(np.asarray(images[0]))
+
+		if model_return[1] < THRESHOLD:
+			string = key_classify(img_to_string(images[0]))
+		else:
+			string = model_return[0]
 
 	elif ext in ["jpg", "jpeg", "png"]:
-		string = img_to_string(Image.open(file))
+		pil_image = Image.open(file)
+		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
+		model_return = model_classify(opencvImage)
+
+		if model_return[1] < THRESHOLD:
+			string = img_to_string(Image.open(file))
+		else:
+			string = model_return[0]
 
 	elif ext == "docx":
 		doc = docx.Document(file)
@@ -90,7 +137,8 @@ def parse_classify(file):
 		sheet = pd.read_excel(file, sheet_name=[0])
 		string = str(sheet)
 
-	classification = key_classify(string)		
+	#classification = key_classify(string)
+	classification = string		
 
 		#maybe you can make a clear way by checking list of keywords to key in dict
 	return classification
@@ -122,14 +170,24 @@ def classify():
 		data['client'] = client_name
 
 		files = request.files.getlist('file')
+		#print(files)
 		instance = {}
 		for file in files:
+			#print(file.filename)
 			if file and allowed_file(file.filename):
 				file_type = parse_classify(file)
 				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type})
 
 	return jsonify(data)
+
+@app.route('/check' , methods=['POST'])
+def check():
+	params = request.args
+	
+	print(params)
+
+	return {"Success"}
 	
 
 if __name__ == '__main__':
-    app.run() #debug=True
+    app.run(debug=True) #debug=True

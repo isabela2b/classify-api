@@ -45,6 +45,11 @@ You can also check for the dependencies by running `pip list` in the terminal.
 | [waitress]     |  1.4.4 | production-quality pure-Python WSGI server that can run on UNIX and Windows 
 
 
+Windows users will have to build or download poppler for Windows. I recommend @oschwartz10612 version which is the most up-to-date. You will then have to add the bin/ folder to PATH or use poppler_path = r"C:\path\to\poppler-xx\bin" as an argument in convert_from_path.
+
+Make sure tesseract-ocr is also installed. 
+
+
 ## Run
 
 Run venv, install the dependencies, then start the server.
@@ -105,6 +110,13 @@ Options for waitress-serve:
     TCP port on which to listen, default is '8080'
 
 More options can be found [here] ('https://docs.pylonsproject.org/projects/waitress/en/stable/runner.html')
+
+
+### Test
+
+via curl:
+
+`curl -F "client=a2b" -F file=@"[absolute path to file]" -F file=@"[absolute path to file]" [URL]/classify`
 
 ### Todos
 
