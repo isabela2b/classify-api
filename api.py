@@ -10,18 +10,20 @@ import docx
 from pdf2image import convert_from_bytes
 from PIL import Image
 
-import keras
+import tensorflow as tf
+from tensorflow import keras
 from keras.models import load_model
 
 app = Flask(__name__)
 
+poppler_path = r"C:\Users\fora2\Documents\poppler-21.03.0\Library\bin" #for windows
 
 model = load_model('base.hdf5')
 doc_type = ['civ', 'coo', 'hbl', 'mbl', 'other', 'pkd', 'pkl']
 
 # Allowed extension you can set your own
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'xls'])
-THRESHOLD = 80
+THRESHOLD = 70
 
 def allowed_file(filename):
     return '.' in filename and file_ext(filename) in ALLOWED_EXTENSIONS
@@ -48,7 +50,8 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
 
 def img_to_string(image):
 	"""Takes an image, pre-processes it, then parses text into a string"""
-	image = cv.cvtColor(np.asarray(image), cv.COLOR_BGR2GRAY)
+	#image = cv.cvtColor(np.asarray(image), cv.COLOR_BGR2GRAY)
+	image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 	"""resize = ResizeWithAspectRatio(image, width=980)
 	cv.imshow("grayscale", resize)
 	cv.waitKey(0)
@@ -77,9 +80,15 @@ def model_classify(image):
                          'Percentage':holistic_pred[0]})
 	df=df.sort_values('Percentage',ascending=False)
 	labels=df['Document_Type']
+	classification = df.iloc[0]['Document_Type'], df.iloc[0]['Percentage']*100
+	print(classification[1])
+	print(classification[0])
 
-	return (df.iloc[0]['Document_Type'], df.iloc[0]['Percentage']*100)
-
+	if classification[1] < THRESHOLD and classification[0] != "other":
+		classification = key_classify(img_to_string(image))
+		return classification
+	else:
+		return classification[0]
 	#return image
 
 def key_classify(string):
@@ -109,22 +118,13 @@ def parse_classify(file):
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read())
-		model_return = model_classify(np.asarray(images[0]))
+		classification = model_classify(np.asarray(images[0]))
 
-		if model_return[1] < THRESHOLD:
-			string = key_classify(img_to_string(images[0]))
-		else:
-			string = model_return[0]
 
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
-		model_return = model_classify(opencvImage)
-
-		if model_return[1] < THRESHOLD:
-			string = img_to_string(Image.open(file))
-		else:
-			string = model_return[0]
+		classification = model_classify(opencvImage)		
 
 	elif ext == "docx":
 		doc = docx.Document(file)
@@ -132,13 +132,14 @@ def parse_classify(file):
 		for para in doc.paragraphs:
 			fullText.append(para.text)
 			string = '\n'.join(fullText)
+		classification = key_classify(string)
 
 	elif ext in ["xls", "xlsx"]:
 		sheet = pd.read_excel(file, sheet_name=[0])
 		string = str(sheet)
+		classification = key_classify(string)
 
-	#classification = key_classify(string)
-	classification = string		
+	#classification = key_classify(string)	
 
 		#maybe you can make a clear way by checking list of keywords to key in dict
 	return classification
