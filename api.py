@@ -23,7 +23,7 @@ doc_type = ['civ', 'coo', 'hbl', 'mbl', 'other', 'pkd', 'pkl']
 
 # Allowed extension you can set your own
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'xls'])
-THRESHOLD = 70
+THRESHOLD = 90
 
 def allowed_file(filename):
     return '.' in filename and file_ext(filename) in ALLOWED_EXTENSIONS
@@ -71,7 +71,7 @@ def img_preprocess(image):
 
 	return im
 
-def model_classify(image):
+def model_classify(image, raw):
 	image = img_preprocess(image)
 	holistic_pred=model.predict(image)
 
@@ -85,7 +85,7 @@ def model_classify(image):
 	print(classification[0])
 
 	if classification[1] < THRESHOLD and classification[0] != "other":
-		classification = key_classify(img_to_string(image))
+		classification = key_classify(img_to_string(np.asarray(raw)))
 		return classification
 	else:
 		return classification[0]
@@ -118,13 +118,13 @@ def parse_classify(file):
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read())
-		classification = model_classify(np.asarray(images[0]))
+		classification = model_classify(np.asarray(images[0]), images[0])
 
 
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
-		classification = model_classify(opencvImage)		
+		classification = model_classify(opencvImage, pil_image)		
 
 	elif ext == "docx":
 		doc = docx.Document(file)
