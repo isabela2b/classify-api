@@ -53,6 +53,7 @@ https://support.microsoft.com/en-us/topic/the-latest-supported-visual-c-download
 
 make sure poppler is in env path
 
+iisreset /restart
 
 ## Run
 

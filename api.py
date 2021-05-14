@@ -14,6 +14,8 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.models import load_model
 
+import time 
+
 app = Flask(__name__)
 
 poppler_path = r"C:\Users\fora2\Documents\poppler-21.03.0\Library\bin" #for windows
@@ -51,12 +53,15 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
 def img_to_string(image):
 	"""Takes an image, pre-processes it, then parses text into a string"""
 	#image = cv.cvtColor(np.asarray(image), cv.COLOR_BGR2GRAY)
+	print("time before pre-processing : ", time.ctime())
 	image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	print("time after pre-processing/before image to string : ", time.ctime())
 	"""resize = ResizeWithAspectRatio(image, width=980)
 	cv.imshow("grayscale", resize)
 	cv.waitKey(0)
 	cv.destroyAllWindows() """  
 	string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
+	print("time of image to string: ", time.ctime())
 	return string
 
 def img_preprocess(image):
@@ -72,8 +77,10 @@ def img_preprocess(image):
 	return im
 
 def model_classify(image, raw):
+	print("time before prediction: ", time.ctime())
 	image = img_preprocess(image)
 	holistic_pred=model.predict(image)
+	print("time after prediction: ", time.ctime())
 
 	sort_index=np.argsort(holistic_pred)[::-1]
 	df=pd.DataFrame({'Document_Type':doc_type,
@@ -81,25 +88,29 @@ def model_classify(image, raw):
 	df=df.sort_values('Percentage',ascending=False)
 	labels=df['Document_Type']
 	classification = df.iloc[0]['Document_Type'], df.iloc[0]['Percentage']*100
-	print(classification[1])
-	print(classification[0])
+	print(classification[1]) #accuracy
+	print(classification[0]) #text
 
 	if classification[1] < THRESHOLD and classification[0] != "other":
-		classification = key_classify(img_to_string(np.asarray(raw)))
-		return classification
+		key_classification = key_classify(img_to_string(np.asarray(raw)))
+		return key_classification, classification[1]
 	else:
-		return classification[0]
+		return classification
 	#return image
 
 def key_classify(string):
 	string = string.lower()
 	if "packing declaration" in string:
+		print("pkd check done")
 		return "pkd"
 	elif "packing list" in string:
+		print("pkl check done")
 		return "pkl"
 	elif "bill of lading" in string:
+		print("hbl check done")
 		return "hbl"
 	elif "invoice" in string:
+		print("civ check done: ", time.ctime())
 		return "civ"
 	else:
 		return "other" 
@@ -115,16 +126,17 @@ def parse_classify(file):
 
 	ext = file_ext(file.filename)
 	string = ""
+	accuracy = 0
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read())
-		classification = model_classify(np.asarray(images[0]), images[0])
+		classification, accuracy = model_classify(np.asarray(images[0]), images[0])
 
 
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
-		classification = model_classify(opencvImage, pil_image)		
+		classification, accuracy = model_classify(opencvImage, pil_image)		
 
 	elif ext == "docx":
 		doc = docx.Document(file)
@@ -142,7 +154,7 @@ def parse_classify(file):
 	#classification = key_classify(string)	
 
 		#maybe you can make a clear way by checking list of keywords to key in dict
-	return classification
+	return classification, accuracy
 
 @app.route('/classify' , methods=['POST'])
 def classify():
@@ -176,8 +188,8 @@ def classify():
 		for file in files:
 			#print(file.filename)
 			if file and allowed_file(file.filename):
-				file_type = parse_classify(file)
-				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type})
+				file_type, accuracy = parse_classify(file)
+				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy})
 
 	return jsonify(data)
 
