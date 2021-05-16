@@ -51,23 +51,17 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
 """
 
 def img_to_string(image):
-	"""Takes an image, pre-processes it, then parses text into a string"""
-	#image = cv.cvtColor(np.asarray(image), cv.COLOR_BGR2GRAY)
-	print("time before pre-processing : ", time.ctime())
-	image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-	print("time after pre-processing/before image to string : ", time.ctime())
-	"""resize = ResizeWithAspectRatio(image, width=980)
-	cv.imshow("grayscale", resize)
-	cv.waitKey(0)
-	cv.destroyAllWindows() """  
+	"""Takes an image then parses text into a string"""
+	print("time before image to string : ", time.ctime())
 	string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
 	print("time of image to string: ", time.ctime())
 	return string
 
-def img_preprocess(image):
-	gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY) # for some reason the dims differ
-	image = cv.resize(gray, (256,256))
+def grayscale(image):
+	return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
+def img_preprocess(image):
+	image = cv.resize(image, (256,256))
 	cv.imwrite('convert.jpg', image)
 	im=cv.imread('convert.jpg')
 
@@ -78,7 +72,8 @@ def img_preprocess(image):
 
 def model_classify(image, raw):
 	print("time before prediction: ", time.ctime())
-	image = img_preprocess(image)
+	gray = grayscale(image)
+	image = img_preprocess(gray)
 	holistic_pred=model.predict(image)
 	print("time after prediction: ", time.ctime())
 
@@ -92,7 +87,7 @@ def model_classify(image, raw):
 	print(classification[0]) #text
 
 	if classification[1] < THRESHOLD and classification[0] != "other":
-		key_classification = key_classify(img_to_string(np.asarray(raw)))
+		key_classification = key_classify(img_to_string(gray)) #key_classification = key_classify(img_to_string(np.asarray(raw)))
 		return key_classification, classification[1]
 	else:
 		return classification
