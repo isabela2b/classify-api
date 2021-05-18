@@ -35,9 +35,10 @@ other_files = [('file',('SEGN21010030 MARGONO.pdf', open('data/other/SEGN2101003
 ('file',('STATEMENT (Asbestos Free) (1).pdf', open('data/other/STATEMENT (Asbestos Free) (1).pdf', 'rb'), 'file/pdf')),
 ('file',('UPDATED FUD[5].pdf', open('data/other/UPDATED FUD[5].pdf', 'rb'), 'file/pdf'))]
 
+breaking_files = [('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf'))]
+
 # ('file',('SO2583108 AU Fumigation.pdf', open('data/other/SO2583108 AU Fumigation.pdf', 'rb'), 'file/pdf'))
-#('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf')))
-r = requests.post(url, data=payload, files=other_files)
+r = requests.post(url, data=payload, files=breaking_files)
 print(r.text)
 
 

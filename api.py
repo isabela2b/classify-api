@@ -14,7 +14,8 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.models import load_model
 
-import time 
+import time
+from multiprocessing import Process, Queue
 
 app = Flask(__name__)
 
@@ -50,12 +51,14 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
     return cv.resize(image, dim, interpolation=inter)
 """
 
-def img_to_string(image):
+def img_to_string(image, queue):
 	"""Takes an image then parses text into a string"""
 	print("time before image to string : ", time.ctime())
-	string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
+	image_string = queue.get()
+	image_string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
+	queue.put(image_string)
 	print("time of image to string: ", time.ctime())
-	return string
+	return image_string
 
 def grayscale(image):
 	return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
@@ -67,7 +70,6 @@ def img_preprocess(image):
 
 	im = im/255
 	im = np.expand_dims(im, axis=0)
-
 	return im
 
 def model_classify(image, raw):
@@ -86,8 +88,18 @@ def model_classify(image, raw):
 	print(classification[1]) #accuracy
 	print(classification[0]) #text
 
+	queue = Queue()
+
 	if classification[1] < THRESHOLD and classification[0] != "other":
-		key_classification = key_classify(img_to_string(gray)) #key_classification = key_classify(img_to_string(np.asarray(raw)))
+		image_string = ""
+		queue.put(image_string)
+		p1 = Process(target=img_to_string, args=(gray, queue,))
+		p1.start()
+		p1.join(timeout=240)
+		p1.terminate()
+		if p1.exitcode is not None:
+			image_string = queue.get()
+		key_classification = key_classify(image_string) #key_classification = key_classify(img_to_string(np.asarray(raw)))
 		return key_classification, classification[1]
 	else:
 		return classification
