@@ -72,7 +72,7 @@ def img_preprocess(image):
 	im = np.expand_dims(im, axis=0)
 	return im
 
-def model_classify(image, raw):
+def model_classify(image):
 	print("time before prediction: ", time.ctime())
 	gray = grayscale(image)
 	image = img_preprocess(gray)
@@ -99,7 +99,7 @@ def model_classify(image, raw):
 		p1.terminate()
 		if p1.exitcode is not None:
 			image_string = queue.get()
-		key_classification = key_classify(image_string) #key_classification = key_classify(img_to_string(np.asarray(raw)))
+		key_classification = key_classify(image_string)
 		return key_classification, classification[1]
 	else:
 		return classification
@@ -137,13 +137,13 @@ def parse_classify(file):
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read())
-		classification, accuracy = model_classify(np.asarray(images[0]), images[0])
+		classification, accuracy = model_classify(np.asarray(images[0]))
 
 
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
-		classification, accuracy = model_classify(opencvImage, pil_image)		
+		classification, accuracy = model_classify(opencvImage)		
 
 	elif ext == "docx":
 		doc = docx.Document(file)
