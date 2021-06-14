@@ -15,7 +15,7 @@ from tensorflow import keras
 from keras.models import load_model
 
 import time
-from multiprocessing import Process, Queue
+#from multiprocessing import Process, Queue
 
 app = Flask(__name__)
 
@@ -51,13 +51,13 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
     return cv.resize(image, dim, interpolation=inter)
 """
 
-def img_to_string(image, queue):
+def img_to_string(image):
 	"""Takes an image then parses text into a string"""
-	print("time before image to string : ", time.ctime())
-	image_string = queue.get()
+	#print("time before image to string : ", time.ctime())
+	#image_string = queue.get()
 	image_string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
-	queue.put(image_string)
-	print("time of image to string: ", time.ctime())
+	#queue.put(image_string)
+	#print("time of image to string: ", time.ctime())
 	return image_string
 
 def grayscale(image):
@@ -77,7 +77,7 @@ def model_classify(image):
 	gray = grayscale(image)
 	image = img_preprocess(gray)
 	holistic_pred=model.predict(image)
-	print("time after prediction: ", time.ctime())
+	#print("time after prediction: ", time.ctime())
 
 	sort_index=np.argsort(holistic_pred)[::-1]
 	df=pd.DataFrame({'Document_Type':doc_type,
@@ -85,20 +85,21 @@ def model_classify(image):
 	df=df.sort_values('Percentage',ascending=False)
 	labels=df['Document_Type']
 	classification = df.iloc[0]['Document_Type'], df.iloc[0]['Percentage']*100
-	print(classification[1]) #accuracy
-	print(classification[0]) #text
+	#print(classification[1]) #accuracy
+	#print(classification[0]) #text
 
-	queue = Queue()
+	#queue = Queue()
 
 	if classification[1] < THRESHOLD and classification[0] != "other":
-		image_string = ""
+		"""image_string = ""
 		queue.put(image_string)
 		p1 = Process(target=img_to_string, args=(gray, queue,))
 		p1.start()
 		p1.join(timeout=240)
 		p1.terminate()
 		if p1.exitcode is not None:
-			image_string = queue.get()
+			image_string = queue.get()"""
+		image_string = img_to_string(gray)
 		key_classification = key_classify(image_string)
 		return key_classification, classification[1]
 	else:
