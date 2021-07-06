@@ -5,6 +5,7 @@ from urllib.request import Request, urlopen
 url = 'http://127.0.0.1:5000/classify'
 prod_url = 'http://a2bfreighthub.com:5000/classify'
 #url = 'http://httpbin.org/post'
+learn_url = 'http://127.0.0.1:5000/learn'
 
 payload = {'client': 'a2b'}
 
@@ -39,6 +40,7 @@ other_files = [('file',('SEGN21010030 MARGONO.pdf', open('data/other/SEGN2101003
 breaking_files = [('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf'))]
 
 # ('file',('SO2583108 AU Fumigation.pdf', open('data/other/SO2583108 AU Fumigation.pdf', 'rb'), 'file/pdf'))
+
 r = requests.post(url, data=payload, files=pdf_files)
 print(r.text)
 
@@ -49,5 +51,8 @@ body = open("body.txt","w")
 body.write(str(r.request.body))
 header = open("header.txt","w") 
 header.write(str(r.request.headers))"""
+
+
+
 
 

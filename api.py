@@ -5,6 +5,8 @@ import cv2 as cv
 import pandas as pd
 import numpy as np
 import io
+import time
+from collections import OrderedDict
 
 import docx
 from pdf2image import convert_from_bytes
@@ -14,8 +16,7 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.models import load_model
 
-import time
-#from multiprocessing import Process, Queue
+import river
 
 app = Flask(__name__)
 
@@ -54,9 +55,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
 def img_to_string(image):
 	"""Takes an image then parses text into a string"""
 	#print("time before image to string : ", time.ctime())
-	#image_string = queue.get()
 	image_string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
-	#queue.put(image_string)
 	#print("time of image to string: ", time.ctime())
 	return image_string
 
@@ -84,26 +83,16 @@ def model_classify(image):
                          'Percentage':holistic_pred[0]})
 	df=df.sort_values('Percentage',ascending=False)
 	labels=df['Document_Type']
-	classification = df.iloc[0]['Document_Type'], df.iloc[0]['Percentage']*100
-	#print(classification[1]) #accuracy
-	#print(classification[0]) #text
-
-	#queue = Queue()
+	classification = df.iloc[0]['Document_Type'], df.iloc[0]['Percentage'] *100
+	df['Percentage'] = df['Percentage']*100
+	rank = df.iloc[0:5].reset_index(drop=True).set_index('Document_Type')['Percentage'].to_dict()
 
 	if classification[1] < THRESHOLD and classification[0] != "other":
-		"""image_string = ""
-		queue.put(image_string)
-		p1 = Process(target=img_to_string, args=(gray, queue,))
-		p1.start()
-		p1.join(timeout=240)
-		p1.terminate()
-		if p1.exitcode is not None:
-			image_string = queue.get()"""
 		image_string = img_to_string(gray)
 		key_classification = key_classify(image_string)
-		return key_classification, classification[1]
+		return key_classification, classification[1], rank
 	else:
-		return classification
+		return classification, rank
 	#return image
 
 def key_classify(string):
@@ -118,7 +107,7 @@ def key_classify(string):
 		print("hbl check done")
 		return "hbl"
 	elif "invoice" in string:
-		print("civ check done: ", time.ctime())
+		print("civ check done: ")
 		return "civ"
 	else:
 		return "other" 
@@ -135,16 +124,17 @@ def parse_classify(file):
 	ext = file_ext(file.filename)
 	string = ""
 	accuracy = 0
+	rank = {}
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read())
-		classification, accuracy = model_classify(np.asarray(images[0]))
+		classification, accuracy, rank = model_classify(np.asarray(images[0]))
 
 
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
-		classification, accuracy = model_classify(opencvImage)		
+		classification, accuracy, rank = model_classify(opencvImage)		
 
 	elif ext == "docx":
 		doc = docx.Document(file)
@@ -159,21 +149,12 @@ def parse_classify(file):
 		string = str(sheet)
 		classification = key_classify(string)
 
-	#classification = key_classify(string)	
-
-		#maybe you can make a clear way by checking list of keywords to key in dict
-	return classification, accuracy
+	return classification, accuracy, rank
 
 @app.route('/classify' , methods=['POST'])
 def classify():
 	"""
 	Receives POST request containing files
-	Files are of the format:
-		mult_files = [
-		('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf')),
-		('file',('civ_2.pdf', open('data/civ/civ_2.pdf', 'rb'), 'file/pdf'))]
-
-		r = requests.post(url, data=payload, files=mult_files)
 
 	Returns JSON of files and their classification
 	"""
@@ -191,15 +172,50 @@ def classify():
 		data['client'] = client_name
 
 		files = request.files.getlist('file')
-		#print(files)
 		instance = {}
 		for file in files:
-			#print(file.filename)
 			if file and allowed_file(file.filename):
-				file_type, accuracy = parse_classify(file)
-				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy})
+				file_type, accuracy, rank = parse_classify(file)
+				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy, 'rank': rank})
 
 	return jsonify(data)
+
+@app.route('/learn' , methods=['POST'])
+def learn():
+	"""
+	Receives JSON with the file and classification
+	"""
+	payload = request.json
+	#ext = file_ext(file.filename)
+	#model.learn_one(payload['file'], payload['type'])
+
+	params = request.json
+	if (params == None):
+		params = request.args
+
+	if (params != None):
+		doc_type = request.form['type']
+		files = request.files.getlist('file')
+		for file in files:
+			#print(file)
+			if file and allowed_file(file.filename):
+				images = convert_from_bytes(file.read())
+				gray = grayscale(np.asarray(images[0]))
+				image = img_preprocess(gray)
+				#model.learn_one(image, doc_type)
+
+	return "Success!"
+
+@app.route('/newtype' , methods=['POST'])
+def new_type():
+	params = request.json
+	if (params == None):
+		params = request.args
+
+	if (params != None):
+		doc_type = request.form['type']
+		files = request.files.getlist('file')
+	return "Success!"
 
 @app.route('/check' , methods=['POST'])
 def check():
