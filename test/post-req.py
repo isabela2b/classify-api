@@ -3,10 +3,10 @@ from urllib.request import Request, urlopen
 
 
 url = 'http://127.0.0.1:5000/classify'
-prod_url = 'http://0.0.0.0:8080/classify'
+prod_url = 'https://www.cargomation.com:5000/learn'
 #url = 'http://httpbin.org/post'
 
-payload = {'client': 'a2b'}
+payload = {'client': 'a2b', 'type':'pkl'}
 
 mult_files = [
 	('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf')),
@@ -34,7 +34,7 @@ pdf_files = [('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf')
 other_files = [('file',('SO2583108 AU Fumigation.pdf', open('data/other/SO2583108 AU Fumigation.pdf', 'rb'), 'file/pdf')),
 ('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf'))]
 
-r = requests.post(url, data=payload, files=pdf_files)
+r = requests.post(url, data=payload, files=mult_files)
 print(r.text)
 
 

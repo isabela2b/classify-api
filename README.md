@@ -50,6 +50,8 @@ Windows users will have to build or download poppler for Windows. I recommend @o
 Make sure tesseract-ocr is also installed. 
 
 
+
+
 ## Run
 
 Run venv, install the dependencies, then start the server.
