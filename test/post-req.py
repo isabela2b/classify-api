@@ -4,7 +4,7 @@ from urllib.request import Request, urlopen
 
 url = 'http://127.0.0.1:5000/classify'
 prod_url = 'https://www.cargomation.com:5000/learn'
-#url = 'http://httpbin.org/post'
+learn_url = 'http://127.0.0.1:5000/learn'
 
 payload = {'client': 'a2b', 'type':'pkl'}
 
@@ -26,13 +26,19 @@ excel_files = [('file',('x_pkl_1.xls', open('data/pkl/x_pkl_1.xls', 'rb'), 'file
 #req = Request('https://templatelab.com/wp-content/uploads/2017/02/bill-of-lading-01.jpg', headers={'User-Agent': 'Mozilla/5.0'})
 #img = urlopen(req).read()
 
-image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image'))
+image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image')), 
+('file',('pkl.png', open('data/pkl/pkl.png', 'rb'), 'file/image'))
 ]
 
 pdf_files = [('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf'))]
 
-other_files = [('file',('SO2583108 AU Fumigation.pdf', open('data/other/SO2583108 AU Fumigation.pdf', 'rb'), 'file/pdf')),
-('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf'))]
+other_files = [('file',('SEGN21010030 MARGONO.pdf', open('data/other/SEGN21010030 MARGONO.pdf', 'rb'), 'file/pdf')),
+('file',('STATEMENT (Asbestos Free) (1).pdf', open('data/other/STATEMENT (Asbestos Free) (1).pdf', 'rb'), 'file/pdf')),
+('file',('UPDATED FUD[5].pdf', open('data/other/UPDATED FUD[5].pdf', 'rb'), 'file/pdf'))]
+
+breaking_files = [('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf'))]
+
+# ('file',('SO2583108 AU Fumigation.pdf', open('data/other/SO2583108 AU Fumigation.pdf', 'rb'), 'file/pdf'))
 
 r = requests.post(url, data=payload, files=mult_files)
 print(r.text)
@@ -44,5 +50,8 @@ body = open("body.txt","w")
 body.write(str(r.request.body))
 header = open("header.txt","w") 
 header.write(str(r.request.headers))"""
+
+
+
 
 

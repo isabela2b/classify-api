@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import io
 import csv
+import time
 
 import docx
 from pdf2image import convert_from_bytes
@@ -26,12 +27,17 @@ app = Flask(__name__)
 #logging.basicConfig(filename='demo.log', level=logging.DEBUG)
 #handler = RotatingFileHandler(os.path.join(app.root_path, 'logs', 'error_log.log'), maxBytes=102400, backupCount=10)
 
+
+app = Flask(__name__)
+
+poppler_path = r"C:\Users\fora2\Documents\poppler-21.03.0\Library\bin" #for windows
+
 model = load_model('models/classify_256.h5')
 doc_type = []
 
 # Allowed extension you can set your own
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'xls'])
-THRESHOLD = 80
+THRESHOLD = 90
 
 with open('doc_type.csv', newline='') as inputfile:
     for row in csv.reader(inputfile):
@@ -67,7 +73,6 @@ def model_classify(image):
 	gray = grayscale(image)
 	image = img_preprocess(gray)
 	holistic_pred=model.predict(image)
-
 	sort_index=np.argsort(holistic_pred)[::-1]
 	df=pd.DataFrame({'Document_Type':doc_type,
                          'Percentage':holistic_pred[0]})
@@ -94,12 +99,16 @@ def model_classify(image):
 def key_classify(string):
 	string = string.lower()
 	if "packing declaration" in string:
+		print("pkd check done")
 		return "pkd"
 	elif "packing list" in string:
+		print("pkl check done")
 		return "pkl"
 	elif "bill of lading" in string:
+		print("hbl check done")
 		return "hbl"
 	elif "invoice" in string:
+		print("civ check done: ")
 		return "civ"
 	else:
 		return "other" 
@@ -128,7 +137,6 @@ def parse_classify(file):
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
 		classification, accuracy, rank = model_classify(opencvImage)
-
 	elif ext == "docx":
 		doc = docx.Document(file)
 		fullText = []
@@ -177,6 +185,7 @@ def learn():
 	"""
 	Receives JSON with the file and classification
 	"""
+
 	data = {'files': []}
 
 	params = request.json

@@ -49,6 +49,13 @@ Windows users will have to build or download poppler for Windows. I recommend @o
 
 Make sure tesseract-ocr is also installed. 
 
+https://support.microsoft.com/en-us/topic/the-latest-supported-visual-c-downloads-2647da03-1eea-4433-9aff-95f26a218cc0
+
+make sure poppler is in env path
+
+iisreset /restart
+
+for river, make sure microsoft visual c installer is installed
 
 
 
@@ -75,7 +82,7 @@ For Windows cmd:
 > pip install -r requirements.txt #install dependencies
 > set FLASK_APP=api.py
 > set FLASK_ENV=development
-> flask run
+> python -m flask run
 ```
 
 For Windows PowerShell, use $env: instead of export:
