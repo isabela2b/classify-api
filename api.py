@@ -9,24 +9,28 @@ import io
 import docx
 from pdf2image import convert_from_bytes
 from PIL import Image
+from sklearn import preprocessing
 
 import tensorflow as tf
 from tensorflow import keras
 from keras.models import load_model
 
-import time
-#from multiprocessing import Process, Queue
+import traceback
+import logging
+#from logging.handlers import RotatingFileHandler
+#from logging.config import dictConfig
 
 app = Flask(__name__)
 
-poppler_path = r"C:\Users\fora2\Documents\poppler-21.03.0\Library\bin" #for windows
+#logging.basicConfig(filename='demo.log', level=logging.DEBUG)
+#handler = RotatingFileHandler(os.path.join(app.root_path, 'logs', 'error_log.log'), maxBytes=102400, backupCount=10)
 
 model = load_model('base.hdf5')
 doc_type = ['civ', 'coo', 'hbl', 'mbl', 'other', 'pkd', 'pkl']
 
 # Allowed extension you can set your own
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'xls'])
-THRESHOLD = 90
+THRESHOLD = 80
 
 def allowed_file(filename):
     return '.' in filename and file_ext(filename) in ALLOWED_EXTENSIONS
@@ -34,30 +38,9 @@ def allowed_file(filename):
 def file_ext(filename):
 	return filename.rsplit('.', 1)[1].lower()
 
-"""
-def ResizeWithAspectRatio(image, width=None, height=None, inter=cv.INTER_AREA):
-    dim = None
-    (h, w) = image.shape[:2]
-
-    if width is None and height is None:
-        return image
-    if width is None:
-        r = height / float(h)
-        dim = (int(w * r), height)
-    else:
-        r = width / float(w)
-        dim = (width, int(h * r))
-
-    return cv.resize(image, dim, interpolation=inter)
-"""
-
 def img_to_string(image):
 	"""Takes an image then parses text into a string"""
-	#print("time before image to string : ", time.ctime())
-	#image_string = queue.get()
 	image_string = pytesseract.image_to_string(image, lang='eng', config='--psm 1 --oem 3')
-	#queue.put(image_string)
-	#print("time of image to string: ", time.ctime())
 	return image_string
 
 def grayscale(image):
@@ -73,52 +56,42 @@ def img_preprocess(image):
 	return im
 
 def model_classify(image):
-	print("time before prediction: ", time.ctime())
 	gray = grayscale(image)
 	image = img_preprocess(gray)
 	holistic_pred=model.predict(image)
-	#print("time after prediction: ", time.ctime())
 
 	sort_index=np.argsort(holistic_pred)[::-1]
 	df=pd.DataFrame({'Document_Type':doc_type,
                          'Percentage':holistic_pred[0]})
 	df=df.sort_values('Percentage',ascending=False)
 	labels=df['Document_Type']
-	classification = df.iloc[0]['Document_Type'], df.iloc[0]['Percentage']*100
-	#print(classification[1]) #accuracy
-	#print(classification[0]) #text
+	classification = df.iloc[0]['Document_Type']
+	percentage =  df.iloc[0]['Percentage']*100
+	df['Percentage'] = df['Percentage']*100
+	rank = df.iloc[0:5].reset_index(drop=True).set_index('Document_Type')['Percentage'].to_dict()
 
-	#queue = Queue()
-
-	if classification[1] < THRESHOLD and classification[0] != "other":
-		"""image_string = ""
-		queue.put(image_string)
-		p1 = Process(target=img_to_string, args=(gray, queue,))
-		p1.start()
-		p1.join(timeout=240)
-		p1.terminate()
-		if p1.exitcode is not None:
-			image_string = queue.get()"""
-		image_string = img_to_string(gray)
-		key_classification = key_classify(image_string)
-		return key_classification, classification[1]
+	if percentage < THRESHOLD: # and percentage != "other":
+		try:
+			image_string = img_to_string(gray)
+			key_classification = key_classify(image_string)
+		except Exception as e:
+			f = open("log.txt", "a")
+			f.write(str(e))
+			f.write(traceback.format_exc())
+			f.close()
+		return key_classification, percentage, rank
 	else:
-		return classification
-	#return image
+		return classification, percentage, rank
 
 def key_classify(string):
 	string = string.lower()
 	if "packing declaration" in string:
-		print("pkd check done")
 		return "pkd"
 	elif "packing list" in string:
-		print("pkl check done")
 		return "pkl"
 	elif "bill of lading" in string:
-		print("hbl check done")
 		return "hbl"
 	elif "invoice" in string:
-		print("civ check done: ", time.ctime())
 		return "civ"
 	else:
 		return "other" 
@@ -135,16 +108,17 @@ def parse_classify(file):
 	ext = file_ext(file.filename)
 	string = ""
 	accuracy = 0
+	rank = {}
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read())
-		classification, accuracy = model_classify(np.asarray(images[0]))
+		classification, accuracy, rank = model_classify(np.asarray(images[0]))
 
 
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
-		classification, accuracy = model_classify(opencvImage)		
+		classification, accuracy, rank = model_classify(opencvImage)
 
 	elif ext == "docx":
 		doc = docx.Document(file)
@@ -159,10 +133,7 @@ def parse_classify(file):
 		string = str(sheet)
 		classification = key_classify(string)
 
-	#classification = key_classify(string)	
-
-		#maybe you can make a clear way by checking list of keywords to key in dict
-	return classification, accuracy
+	return classification, accuracy, rank
 
 @app.route('/classify' , methods=['POST'])
 def classify():
@@ -191,15 +162,67 @@ def classify():
 		data['client'] = client_name
 
 		files = request.files.getlist('file')
-		#print(files)
 		instance = {}
 		for file in files:
-			#print(file.filename)
 			if file and allowed_file(file.filename):
-				file_type, accuracy = parse_classify(file)
-				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy})
+				file_type, accuracy, rank = parse_classify(file)
+				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy, 'rank': rank})
 
 	return jsonify(data)
+
+@app.route('/learn' , methods=['POST'])
+def learn():
+	"""
+	Receives JSON with the file and classification
+	"""
+	params = request.json
+	if (params == None):
+		params = request.args
+
+	if (params != None):
+		target = request.form['type']
+		files = request.files.getlist('file')
+		for file in files:
+			ext = file_ext(file.filename)
+			if file and ext in ['pdf','jpg','jpeg','png'] and target in doc_type:
+
+				if ext == 'pdf':
+					images = convert_from_bytes(file.read())
+					try:
+						update_model(np.asarray(images[0]),target)
+					except Exception as e:
+						f = open("log.txt", "a")
+						f.write(str(e))
+						f.write(traceback.format_exc())
+						f.close()
+					return "Success!"
+
+				else:
+					image = Image.open(file)
+					opencvImage = cv.cvtColor(np.array(image), cv.COLOR_RGB2BGR)
+					update_model(opencvImage, target)
+					return "Success!"
+
+			else:
+				return "File format not supported."
+
+def update_model(X,y):
+	try:
+		gray = grayscale(X)
+		X = img_preprocess(gray)
+		le = preprocessing.LabelBinarizer()
+		le.fit(doc_type)
+		y = le.transform([y])
+		model.fit(X,y)
+		model.save('base.hdf5', overwrite=True)
+		return "Success!"
+	except Exception as e:
+		#f = open("log.txt", "a")
+		#f.write(str(e))
+		#f.write(traceback.format_exc())
+		#f.close()
+		return e
+	#return "Success!"
 
 @app.route('/check' , methods=['POST'])
 def check():
@@ -207,8 +230,11 @@ def check():
 	
 	print(params)
 
-	return {"Success"}
+	return "Success"
 	
+@app.route('/' , methods=['GET'])
+def home():
+	return "Success"
 
 if __name__ == '__main__':
-    app.run(debug=True) #debug=True
+    app.run() #debug=True
