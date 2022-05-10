@@ -5,6 +5,7 @@ import cv2 as cv
 import pandas as pd
 import numpy as np
 import io
+import csv
 
 import docx
 from pdf2image import convert_from_bytes
@@ -17,20 +18,28 @@ from keras.models import load_model
 
 import traceback
 import logging
-#from logging.handlers import RotatingFileHandler
-#from logging.config import dictConfig
+from logging.handlers import RotatingFileHandler
+from logging.config import dictConfig
 
 app = Flask(__name__)
 
 #logging.basicConfig(filename='demo.log', level=logging.DEBUG)
 #handler = RotatingFileHandler(os.path.join(app.root_path, 'logs', 'error_log.log'), maxBytes=102400, backupCount=10)
 
-model = load_model('base.hdf5')
-doc_type = ['civ', 'coo', 'hbl', 'mbl', 'other', 'pkd', 'pkl']
+poppler_path = r"C:\Program Files\poppler-21.03.0\Library\bin"
+model = load_model('models/classify_256.h5')
+doc_type = []
 
 # Allowed extension you can set your own
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'xls'])
 THRESHOLD = 80
+
+with open('doc_type.csv', newline='') as inputfile:
+    for row in csv.reader(inputfile):
+        doc_type.append(row[0])
+
+doc_type.sort()
+
 
 def allowed_file(filename):
     return '.' in filename and file_ext(filename) in ALLOWED_EXTENSIONS
@@ -96,6 +105,7 @@ def key_classify(string):
 	else:
 		return "other" 
 
+
 def parse_classify(file):
 	"""
 	Receives file 
@@ -111,7 +121,7 @@ def parse_classify(file):
 	rank = {}
 
 	if ext == "pdf":
-		images = convert_from_bytes(file.read())
+		images = convert_from_bytes(file.read(), poppler_path=poppler_path)
 		classification, accuracy, rank = model_classify(np.asarray(images[0]))
 
 
@@ -139,42 +149,39 @@ def parse_classify(file):
 def classify():
 	"""
 	Receives POST request containing files
-	Files are of the format:
-		mult_files = [
-		('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf')),
-		('file',('civ_2.pdf', open('data/civ/civ_2.pdf', 'rb'), 'file/pdf'))]
-
-		r = requests.post(url, data=payload, files=mult_files)
-
 	Returns JSON of files and their classification
 	"""
+	try:
+		data = {'client': 'None','files': []}
 
-	data = {'client': 'None','files': []}
+		#get the request parameters
+		params = request.json
+		if (params == None):
+			params = request.args
 
-	#get the request parameters
-	params = request.json
-	if (params == None):
-		params = request.args
+		# if parameters are found, return a prediction
+		if (params != None):
+			client_name = request.form['client']
+			data['client'] = client_name
 
-	# if parameters are found, return a prediction
-	if (params != None):
-		client_name = request.form['client']
-		data['client'] = client_name
+			files = request.files.getlist('file')
+			instance = {}
+			for file in files:
+				if file and allowed_file(file.filename):
+					file_type, accuracy, rank = parse_classify(file)
+					data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy, 'rank': rank})
 
-		files = request.files.getlist('file')
-		instance = {}
-		for file in files:
-			if file and allowed_file(file.filename):
-				file_type, accuracy, rank = parse_classify(file)
-				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy, 'rank': rank})
-
-	return jsonify(data)
+		return jsonify(data)
+	except Exception as ex:
+		return str(ex)
 
 @app.route('/learn' , methods=['POST'])
 def learn():
 	"""
 	Receives JSON with the file and classification
 	"""
+	data = {'files': []}
+
 	params = request.json
 	if (params == None):
 		params = request.args
@@ -187,21 +194,24 @@ def learn():
 			if file and ext in ['pdf','jpg','jpeg','png'] and target in doc_type:
 
 				if ext == 'pdf':
-					images = convert_from_bytes(file.read())
+					images = convert_from_bytes(file.read(), poppler_path=poppler_path)
 					try:
 						update_model(np.asarray(images[0]),target)
+						file_type, accuracy, rank = model_classify(np.asarray(images[0]))
 					except Exception as e:
 						f = open("log.txt", "a")
 						f.write(str(e))
 						f.write(traceback.format_exc())
-						f.close()
-					return "Success!"
+						f.close()					
 
 				else:
 					image = Image.open(file)
 					opencvImage = cv.cvtColor(np.array(image), cv.COLOR_RGB2BGR)
 					update_model(opencvImage, target)
-					return "Success!"
+					file_type, accuracy, rank = model_classify(opencvImage)				
+
+				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy, 'rank': rank})
+				return jsonify(data)
 
 			else:
 				return "File format not supported."
@@ -214,7 +224,7 @@ def update_model(X,y):
 		le.fit(doc_type)
 		y = le.transform([y])
 		model.fit(X,y)
-		model.save('base.hdf5', overwrite=True)
+		model.save('models/classify_256.h5', overwrite=True)
 		return "Success!"
 	except Exception as e:
 		#f = open("log.txt", "a")
@@ -234,7 +244,10 @@ def check():
 	
 @app.route('/' , methods=['GET'])
 def home():
-	return "Success"
+	try:
+		return "Success"
+	except Exception as ex:
+		return str(ex)
 
 if __name__ == '__main__':
     app.run() #debug=True

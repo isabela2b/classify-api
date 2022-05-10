@@ -4,6 +4,7 @@ from urllib.request import Request, urlopen
 
 url = 'http://127.0.0.1:5000/classify'
 prod_url = 'http://a2bfreighthub.com:5000/classify'
+other='http://cargomation.com:5000/classify'
 #url = 'http://httpbin.org/post'
 
 payload = {'client': 'a2b'}
@@ -26,8 +27,8 @@ excel_files = [('file',('x_pkl_1.xls', open('data/pkl/x_pkl_1.xls', 'rb'), 'file
 #req = Request('https://templatelab.com/wp-content/uploads/2017/02/bill-of-lading-01.jpg', headers={'User-Agent': 'Mozilla/5.0'})
 #img = urlopen(req).read()
 
-image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image')), 
-('file',('pkl.png', open('data/pkl/pkl.png', 'rb'), 'file/image'))
+image_files = [('file',('pkl.jpeg', open('data/pkl/pkl.jpeg', 'rb'), 'file/image')),
+('file',('pkd_2.jpg', open('data/pkd/pkd_2.jpg', 'rb'), 'file/image'))
 ]
 
 pdf_files = [('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf'))]
@@ -39,7 +40,7 @@ other_files = [('file',('SEGN21010030 MARGONO.pdf', open('data/other/SEGN2101003
 breaking_files = [('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf'))]
 
 # ('file',('SO2583108 AU Fumigation.pdf', open('data/other/SO2583108 AU Fumigation.pdf', 'rb'), 'file/pdf'))
-r = requests.post(url, data=payload, files=pdf_files)
+r = requests.post(other, data=payload, files=image_files)
 print(r.text)
 
 
