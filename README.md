@@ -55,6 +55,10 @@ make sure poppler is in env path
 
 iisreset /restart
 
+for river, make sure microsoft visual c installer is installed
+
+
+
 ## Run
 
 Run venv, install the dependencies, then start the server.

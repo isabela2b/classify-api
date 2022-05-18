@@ -3,11 +3,16 @@ from urllib.request import Request, urlopen
 
 
 url = 'http://127.0.0.1:5000/classify'
+<<<<<<< HEAD
 prod_url = 'http://a2bfreighthub.com:5000/classify'
 other='http://cargomation.com:5000/classify'
 #url = 'http://httpbin.org/post'
+=======
+prod_url = 'https://www.cargomation.com:5000/learn'
+learn_url = 'http://127.0.0.1:5000/learn'
+>>>>>>> 2890263945010b4d89b7741f08efe1f2b807682d
 
-payload = {'client': 'a2b'}
+payload = {'client': 'a2b', 'type':'pkl'}
 
 mult_files = [
 	('file',('civ_1.pdf', open('data/civ/civ_1.pdf', 'rb'), 'file/pdf')),
@@ -40,7 +45,12 @@ other_files = [('file',('SEGN21010030 MARGONO.pdf', open('data/other/SEGN2101003
 breaking_files = [('file',('TELEX RELEASE MARGONO.pdf', open('data/other/TELEX RELEASE MARGONO.pdf', 'rb'), 'file/pdf'))]
 
 # ('file',('SO2583108 AU Fumigation.pdf', open('data/other/SO2583108 AU Fumigation.pdf', 'rb'), 'file/pdf'))
+<<<<<<< HEAD
 r = requests.post(other, data=payload, files=image_files)
+=======
+
+r = requests.post(url, data=payload, files=mult_files)
+>>>>>>> 2890263945010b4d89b7741f08efe1f2b807682d
 print(r.text)
 
 
@@ -50,5 +60,8 @@ body = open("body.txt","w")
 body.write(str(r.request.body))
 header = open("header.txt","w") 
 header.write(str(r.request.headers))"""
+
+
+
 
 
