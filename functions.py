@@ -2,7 +2,7 @@ import pytesseract
 import cv2 as cv
 import pandas as pd
 import numpy as np
-import io, csv, time, os
+import io, csv, time, os, traceback
 
 import docx
 from pdf2image import convert_from_bytes
@@ -14,7 +14,6 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.models import load_model
 
-poppler_path = r"C:\Program Files\poppler-21.03.0\Library\bin"
 model = load_model('models/classify_512.h5')
 data_folder = "merge/"
 doc_type = []
@@ -69,14 +68,9 @@ def model_classify(image):
 	rank = df.iloc[0:5].reset_index(drop=True).set_index('Document_Type')['Percentage'].to_dict()
 
 	if percentage < THRESHOLD and percentage != "other":
-		try:
-			image_string = img_to_string(gray)
-			key_classification = key_classify(image_string)
-		except Exception as e:
-			f = open("log.txt", "a")
-			f.write(str(e))
-			f.write(traceback.format_exc())
-			f.close()
+		key_classification = "other"		
+		#image_string = img_to_string(gray)
+		#key_classification = key_classify(image_string)
 		return {'classification':key_classification, 'accuracy': percentage, 'rank': rank} 
 	else:
 		return {'classification':classification, 'accuracy': percentage, 'rank': rank}
@@ -123,7 +117,7 @@ def multipage_combine(predictions, file):
 		with open(data_folder+split_file_name, "wb") as outputStream:
 			output.write(outputStream)
 		average_accuracy = average_accuracy/len(pages)
-		merged_predictions[split_file_name] = {'classification':classification, 'pages':pages, 'accuracy':average_accuracy, 'path':os.path.abspath(data_folder+split_file_name)}
+		merged_predictions[split_file_name] = {'classification':classification, 'pages':pages, 'accuracy':average_accuracy, 'path':'https://cargomation.com/merged_classify/'+split_file_name}
 
 	return merged_predictions
 
@@ -138,8 +132,6 @@ def parse_classify(file):
 
 	ext = file_ext(file.filename)
 	string = ""
-	accuracy = 0
-	rank = {}
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read()) #, grayscale=True
@@ -147,7 +139,6 @@ def parse_classify(file):
 		for idx, image in enumerate(images):
 			prediction[idx+1]  = model_classify(image) # prediction should return page indexes to be merged and separated and classification
 		predictions = multipage_combine(prediction, file)
-
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)

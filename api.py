@@ -4,17 +4,18 @@ from functions import parse_classify, update_model, model_classify, allowed_file
 import numpy as np
 import cv2 as cv
 from PIL import Image
-import traceback
 import logging
-from logging.handlers import RotatingFileHandler
-from logging.config import dictConfig
+
+
+#from logging.handlers import RotatingFileHandler
+#from logging.config import dictConfig
 
 app = Flask(__name__)
 
 #logging.basicConfig(filename='demo.log', level=logging.DEBUG)
 #handler = RotatingFileHandler(os.path.join(app.root_path, 'logs', 'error_log.log'), maxBytes=102400, backupCount=10)
 
-poppler_path = r"C:\Program Files\poppler-21.03.0\Library\bin"
+poppler_path = r"C:\Users\fora2\Documents\poppler-21.03.0\Library\bin" #for windows
 
 @app.route('/classify' , methods=['POST'])
 def classify():
@@ -23,7 +24,8 @@ def classify():
 	Returns JSON of files and their classification
 	"""
 	try:
-		data = {'client': 'None','files': []}
+
+		data = {'user_id': 'None','files': []}
 
 		#get the request parameters
 		params = request.json
@@ -32,39 +34,18 @@ def classify():
 
 		# if parameters are found, return a prediction
 		if (params != None):
-			client_name = request.form['client']
-			data['client'] = client_name
+			user_id = request.form['user_id']
+			data['user_id'] = user_id
 
 			files = request.files.getlist('file')
 			instance = {}
 			for file in files:
 				if file and allowed_file(file.filename):
-					file_type, accuracy, rank = parse_classify(file)
-					data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy, 'rank': rank})
-
+					file_type, prediction = parse_classify(file)
+					data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2), 'file type': file_type, 'prediction': prediction})		
 		return jsonify(data)
-	except Exception as ex:
-		return str(ex)
-
-@app.route('/learn' , methods=['POST'])
-def learn():
-	"""
-	Receives JSON with the file and classification
-	"""
-	data = {'files': []}
-
-	params = request.json
-	if (params == None):
-		params = request.args
-
-	if (params != None):
-		target = request.form['type']
-		files = request.files.getlist('file')
-		for file in files:
-			if file and allowed_file(file.filename):
-				file_type, prediction = parse_classify(file)
-				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2), 'file type': file_type, 'prediction': prediction})		
-	return jsonify(data)
+	except Exception as e:
+		return str(e)
 
 @app.route('/learn' , methods=['POST'])
 def learn():
@@ -119,10 +100,7 @@ def check():
 	
 @app.route('/' , methods=['GET'])
 def home():
-	try:
-		return "Success"
-	except Exception as ex:
-		return str(ex)
+	return "Success"
 
 if __name__ == '__main__':
     app.run() #debug=True
