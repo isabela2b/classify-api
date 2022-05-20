@@ -1,3 +1,10 @@
 __pycache__/
 /venv
 models/
+log.txt
+web.config
+wfastcgi.py
+/App_Data
+convert.jpg
+test/
+merge/
