@@ -97,7 +97,6 @@ def multipage_combine(predictions, file):
 	res = {}
 	for i, v in shared_type.items():
 		res[v] = [i] if v not in res.keys() else res[v] + [i]
-	print(res)
 	merged_predictions = {}
 	inputpdf = PdfFileReader(file)
 	if inputpdf.isEncrypted:
@@ -135,10 +134,13 @@ def parse_classify(file):
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read()) #, grayscale=True
-		prediction = {}
-		for idx, image in enumerate(images):
-			prediction[idx+1]  = model_classify(image) # prediction should return page indexes to be merged and separated and classification
-		predictions = multipage_combine(prediction, file)
+		if len(images) == 1:
+			predictions = model_classify(images[0])
+		else:
+			prediction = {}
+			for idx, image in enumerate(images):
+				prediction[idx+1]  = model_classify(image) # prediction should return page indexes to be merged and separated and classification
+			predictions = multipage_combine(prediction, file)
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
@@ -168,7 +170,7 @@ def update_model(X,y):
 		le.fit(doc_type)
 		y = le.transform([y])
 		model.fit(X,y)
-		model.save('models/classify_256.h5', overwrite=True)
+		model.save('models/classify_512_updated.h5', overwrite=True)
 		return "Success!"
 	except Exception as e:
 		#f = open("log.txt", "a")
@@ -177,3 +179,24 @@ def update_model(X,y):
 		#f.close()
 		return e
 	#return "Success!"
+
+def split_pdf(res, file):
+	merged_predictions = {}
+	inputpdf = PdfFileReader(file)
+	if inputpdf.isEncrypted:
+		try:
+			inputpdf.decrypt('')
+			print('File Decrypted (PyPDF2)')
+		except:
+			print("Decryption error")
+
+	for classification, pages in res.items():
+		output = PdfFileWriter()
+		for page in pages:
+			output.addPage(inputpdf.getPage(page-1))
+		split_file_name = file_name(file.filename)+"_"+classification+".pdf"
+		with open(data_folder+split_file_name, "wb") as outputStream:
+			output.write(outputStream)
+		merged_predictions[split_file_name] = {'classification':classification, 'pages':pages, 'path':'https://cargomation.com/merged_classify/'+split_file_name}
+
+	return merged_predictions

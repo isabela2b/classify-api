@@ -1,6 +1,6 @@
 __pycache__/
 /venv
-models/
+models/*.h5
 log.txt
 web.config
 wfastcgi.py

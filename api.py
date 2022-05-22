@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify
-from functions import parse_classify, update_model, model_classify, allowed_file
+from functions import parse_classify, update_model, model_classify, allowed_file, split_pdf
 
 import numpy as np
 import cv2 as cv
 from PIL import Image
-import logging
+import json, logging
 
 
 #from logging.handlers import RotatingFileHandler
@@ -34,15 +34,42 @@ def classify():
 
 		# if parameters are found, return a prediction
 		if (params != None):
-			user_id = request.form['user_id']
-			data['user_id'] = user_id
+			data['user_id'] = request.form['user_id']
 
 			files = request.files.getlist('file')
-			instance = {}
 			for file in files:
 				if file and allowed_file(file.filename):
 					file_type, prediction = parse_classify(file)
 					data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2), 'file type': file_type, 'prediction': prediction})		
+		return jsonify(data)
+	except Exception as e:
+		return str(e)
+
+@app.route('/split' , methods=['POST'])
+def split():
+	"""
+	Receives POST request containing files
+	Returns JSON of files and their classification
+	"""
+	try:
+
+		data = {'user_id': 'None','files': []}
+
+		#get the request parameters
+		params = request.json
+		if (params == None):
+			params = request.args
+
+		# if parameters are found, return a prediction
+		if (params != None):
+			data['user_id'] = request.form['user_id']
+			classification = json.loads(request.form['classification'])
+			print(classification)
+
+			file = request.files.getlist('file')[0]
+			if allowed_file(file.filename):
+				prediction = split_pdf(classification, file)
+				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2), 'prediction': prediction}) 		
 		return jsonify(data)
 	except Exception as e:
 		return str(e)
