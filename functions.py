@@ -116,7 +116,7 @@ def multipage_combine(predictions, file):
 		with open(data_folder+split_file_name, "wb") as outputStream:
 			output.write(outputStream)
 		average_accuracy = average_accuracy/len(pages)
-		merged_predictions[split_file_name].append({'classification':classification, 'pages':pages, 'accuracy':average_accuracy, 'path':'https://cargomation.com/merged_classify/'+split_file_name})
+		merged_predictions.append({'classification':classification, 'pages':pages, 'accuracy':average_accuracy, 'path':'https://cargomation.com/merged_classify/'+split_file_name})
 
 	return merged_predictions
 
