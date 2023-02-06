@@ -20,7 +20,7 @@ doc_type = []
 
 # Allowed extension you can set your own
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'xls'])
-THRESHOLD = 90
+THRESHOLD = 85
 
 with open('doc_type.csv', newline='') as inputfile:
     for row in csv.reader(inputfile):
@@ -97,7 +97,7 @@ def multipage_combine(predictions, file):
 	res = {}
 	for i, v in shared_type.items():
 		res[v] = [i] if v not in res.keys() else res[v] + [i]
-	merged_predictions = {}
+	merged_predictions = []
 	inputpdf = PdfFileReader(file)
 	if inputpdf.isEncrypted:
 		try:
@@ -116,7 +116,7 @@ def multipage_combine(predictions, file):
 		with open(data_folder+split_file_name, "wb") as outputStream:
 			output.write(outputStream)
 		average_accuracy = average_accuracy/len(pages)
-		merged_predictions[split_file_name] = {'classification':classification, 'pages':pages, 'accuracy':average_accuracy, 'path':'https://cargomation.com/merged_classify/'+split_file_name}
+		merged_predictions[split_file_name].append({'classification':classification, 'pages':pages, 'accuracy':average_accuracy, 'path':'https://cargomation.com/merged_classify/'+split_file_name})
 
 	return merged_predictions
 
@@ -134,13 +134,10 @@ def parse_classify(file):
 
 	if ext == "pdf":
 		images = convert_from_bytes(file.read()) #, grayscale=True
-		if len(images) == 1:
-			predictions = model_classify(images[0])
-		else:
-			prediction = {}
-			for idx, image in enumerate(images):
-				prediction[idx+1]  = model_classify(image) # prediction should return page indexes to be merged and separated and classification
-			predictions = multipage_combine(prediction, file)
+		prediction = {}
+		for idx, image in enumerate(images):
+			prediction[idx+1]  = model_classify(image) # prediction should return page indexes to be merged and separated and classification
+		predictions = multipage_combine(prediction, file)
 	elif ext in ["jpg", "jpeg", "png"]:
 		pil_image = Image.open(file)
 		opencvImage = cv.cvtColor(np.array(pil_image), cv.COLOR_RGB2BGR)
