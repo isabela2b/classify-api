@@ -28,7 +28,7 @@ def classify():
 		data = {'user_id': 'None','files': []}
 
 		#get the request parameters
-		params = request.json
+		params = request.values
 		if (params == None):
 			params = request.args
 
@@ -40,8 +40,9 @@ def classify():
 			for file in files:
 				if file and allowed_file(file.filename):
 					file_type, prediction = parse_classify(file)
-					data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2), 'file type': file_type, 'prediction': prediction})		
-		return jsonify(data)
+					data["files"].append({'file_name': file.filename, 'file_size': file.seek(0,2), 'file_type': file_type, 'prediction': prediction})		
+		return json.dumps(data, sort_keys=False)
+		#return jsonify(data)
 	except Exception as e:
 		return str(e)
 
@@ -69,7 +70,7 @@ def split():
 			file = request.files.getlist('file')[0]
 			if allowed_file(file.filename):
 				prediction = split_pdf(classification, file)
-				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2), 'prediction': prediction}) 		
+				data["files"].append({'file_name': file.filename, 'file_size': file.seek(0,2), 'prediction': prediction}) 		
 		return jsonify(data)
 	except Exception as e:
 		return str(e)
@@ -110,7 +111,7 @@ def learn():
 					update_model(opencvImage, target)
 					file_type, accuracy, rank = model_classify(opencvImage)				
 
-				data["files"].append({'file name': file.filename, 'file size in bytes': file.seek(0,2) ,'type': file_type, 'accuracy':accuracy, 'rank': rank})
+				data["files"].append({'file_name': file.filename, 'file_size': file.seek(0,2), 'file_type': file_type, 'accuracy':accuracy, 'rank': rank})
 				return jsonify(data)
 
 			else:
@@ -131,3 +132,4 @@ def home():
 
 if __name__ == '__main__':
     app.run() #debug=True
+    app.config['JSON_SORT_KEYS'] = False
