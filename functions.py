@@ -108,15 +108,17 @@ def multipage_combine(predictions, file):
 
 	for classification, pages in res.items():
 		average_accuracy = 0
+		rank = []
 		output = PdfFileWriter()
 		for page in pages:
 			output.addPage(inputpdf.getPage(page-1))
-			average_accuracy += predictions[page]["accuracy"] 
+			average_accuracy += predictions[page]["accuracy"]
+			rank.append(predictions[page]["rank"])
 		split_file_name = file_name(file.filename)+"_"+classification+".pdf"
 		with open(data_folder+split_file_name, "wb") as outputStream:
 			output.write(outputStream)
 		average_accuracy = average_accuracy/len(pages)
-		merged_predictions.append({'classification':classification, 'pages':pages, 'accuracy':average_accuracy, 'path':'https://cargomation.com/merged_classify/'+split_file_name})
+		merged_predictions.append({'classification':classification, 'accuracy':average_accuracy, 'pages':pages, 'path':'https://cargomation.com/merged_classify/'+split_file_name, 'rank': rank})
 
 	return merged_predictions
 
