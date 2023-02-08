@@ -40,9 +40,9 @@ def classify():
 			for file in files:
 				if file and allowed_file(file.filename):
 					file_type, prediction = parse_classify(file)
-					data["files"].append({'file_name': file.filename, 'file_size': file.seek(0,2), 'file_type': file_type, 'prediction': prediction})		
-		return json.dumps(data, sort_keys=False)
-		#return jsonify(data)
+					data["files"].append({'file_name': file.filename, 'file_size': file.seek(0,2), 'file_type': file_type, 'prediction': prediction})	
+		response = app.response_class(response=json.dumps(data, sort_keys=False), status=200, mimetype='application/json')
+		return response
 	except Exception as e:
 		return str(e)
 
@@ -132,4 +132,3 @@ def home():
 
 if __name__ == '__main__':
     app.run() #debug=True
-    app.config['JSON_SORT_KEYS'] = False
