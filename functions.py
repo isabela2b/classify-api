@@ -7,7 +7,7 @@ import io, csv, time, os, traceback
 import docx
 from pdf2image import convert_from_bytes
 from PIL import Image
-from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
+from PyPDF2 import PdfWriter, PdfReader, PdfMerger
 from sklearn import preprocessing
 
 import tensorflow as tf
@@ -98,8 +98,8 @@ def multipage_combine(predictions, file):
 	for i, v in shared_type.items():
 		res[v] = [i] if v not in res.keys() else res[v] + [i]
 	merged_predictions = []
-	inputpdf = PdfFileReader(file)
-	if inputpdf.isEncrypted:
+	inputpdf = PdfReader(file)
+	if inputpdf.is_encrypted:
 		try:
 			inputpdf.decrypt('')
 			print('File Decrypted (PyPDF2)')
@@ -109,9 +109,9 @@ def multipage_combine(predictions, file):
 	for classification, pages in res.items():
 		average_accuracy = 0
 		rank = []
-		output = PdfFileWriter()
+		output = PdfWriter()
 		for page in pages:
-			output.addPage(inputpdf.getPage(page-1))
+			output.add_page(inputpdf.pages[page-1])
 			average_accuracy += predictions[page]["accuracy"]
 			rank.append(predictions[page]["rank"])
 		split_file_name = file_name(file.filename)+"_"+classification+".pdf"
@@ -181,8 +181,8 @@ def update_model(X,y):
 
 def split_pdf(res, file):
 	merged_predictions = {}
-	inputpdf = PdfFileReader(file)
-	if inputpdf.isEncrypted:
+	inputpdf = PdfReader(file)
+	if inputpdf.is_encrypted:
 		try:
 			inputpdf.decrypt('')
 			print('File Decrypted (PyPDF2)')
@@ -190,9 +190,9 @@ def split_pdf(res, file):
 			print("Decryption error")
 
 	for classification, pages in res.items():
-		output = PdfFileWriter()
+		output = PdfWriter()
 		for page in pages:
-			output.addPage(inputpdf.getPage(page-1))
+			output.add_page(inputpdf.pages[page-1])
 		split_file_name = file_name(file.filename)+"_"+classification+".pdf"
 		with open(data_folder+split_file_name, "wb") as outputStream:
 			output.write(outputStream)
